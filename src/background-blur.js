@@ -266,7 +266,8 @@
 
     var gaussianBlur = SVG.createElement('feGaussianBlur', { // gaussian blur element
       'in': 'SourceGraphic', //"in" is keyword. Opera generates an error if we don't put quotes
-      stdDeviation: that.options.animateBlur ? 0 : that.options.blurAmount // intensity of blur
+      stdDeviation: that.options.animateBlur ? 0 : that.options.blurAmount, // intensity of blur
+      result: 'blurOut'
     });
 
     var image = SVG.createElement('image', { //The image that uses the filter of blur
@@ -310,7 +311,7 @@
       });
       var alphaFunc = SVG.createElement('feFuncA', { 
         type: 'table',
-        tableValues: '1'
+        tableValues: '1 1'
       });
       alphaFilter.appendChild(alphaFunc);
       filter.appendChild(alphaFilter);
