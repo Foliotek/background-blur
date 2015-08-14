@@ -140,12 +140,16 @@
   Blur.VERSION  = '0.0.1';
 
   Blur.DEFAULTS = {
-    imageURL      : '', // URL to the image
-    blurAmount    : 10, // Amount of blurrines
-    imageClass    : '', // CSS class that will be applied to the image and to the SVG element,
-    overlayClass  : '', // CSS class of the element that will overlay the blur image
-    duration      : false, // If the image needs to be faded in, how long should that take
-    opacity       : 1 // Specify the final opacity
+    imageURL            : '', // URL to the image
+    blurAmount          : 10, // Amount of blurrines
+    imageClass          : '', // CSS class that will be applied to the image and to the SVG element,
+    overlayClass        : '', // CSS class of the element that will overlay the blur image
+    duration            : false, // If the image needs to be faded in, how long should that take
+    opacity             : 1, // Specify the final opacity
+    preventAlpha        : false, // Gaussian blur inherrently has alpha on the edges - this prevents that
+    animateBlur         : false, // animates the blurring of the image.  Different from fading it in.
+    animateBlurDelay    : '0',
+    preserveAspectRatio : 'none'
   };
 
   Blur.prototype.detectVelocity= function() {
@@ -252,7 +256,7 @@
       id: 'blurred' + this.internalID,
       'class': this.options.imageClass,
       viewBox: '0 0 ' + width + ' '+ height,
-      preserveAspectRatio: 'none'
+      preserveAspectRatio: that.options.preserveAspectRatio
     });
 
     var filterId = 'blur' + this.internalID; //id of the filter that is called by image element
@@ -262,7 +266,7 @@
 
     var gaussianBlur = SVG.createElement('feGaussianBlur', { // gaussian blur element
       'in': 'SourceGraphic', //"in" is keyword. Opera generates an error if we don't put quotes
-      stdDeviation: this.options.blurAmount // intensity of blur
+      stdDeviation: that.options.animateBlur ? 0 : that.options.blurAmount // intensity of blur
     });
 
     var image = SVG.createElement('image', { //The image that uses the filter of blur
@@ -273,7 +277,7 @@
       'externalResourcesRequired' : 'true',
       href: url,
       style: 'filter:url(#' + filterId + ')', //filter link
-      preserveAspectRatio: 'none'
+      preserveAspectRatio: that.options.preserveAspectRatio
     });
 
     image.addEventListener('load', function() {
@@ -287,8 +291,32 @@
     filter.appendChild(gaussianBlur); //adding the element of blur into the element of filter
     svg.appendChild(filter); //adding the filter into the SVG
     svg.appendChild(image); //adding an element of an image into the SVG
-    var $svg = $(svg);
+    
+    if (that.options.animateBlur) {
+      var blurAnimate = SVG.createElement('animate', {
+        attributeName: 'stdDeviation',
+        attributeType: 'number',
+        repeatCount: '0',
+        dur: '1s',
+        fill: 'freeze',
+        begin: that.options.animateBlurDelay,
+        values: '0;' + that.options.blurAmount
+      });
+      gaussianBlur.appendChild(blurAnimate);
+    }
+    if (that.options.preventAlpha) {
+      var alphaFilter = SVG.createElement('feComponentTransfer', { 
+        in: 'blurOut'
+      });
+      var alphaFunc = SVG.createElement('feFuncA', { 
+        type: 'table',
+        tableValues: '1'
+      });
+      alphaFilter.appendChild(alphaFunc);
+      filter.appendChild(alphaFilter);
+    }
 
+    var $svg = $(svg);
     // Ensure that the image is shown after duration + 100 msec in case the SVG load event didn't fire or took too long
     if (that.options.duration && that.options.duration > 0) {
       $svg.css({ opacity : 0});
