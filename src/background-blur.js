@@ -297,7 +297,7 @@
       var blurAnimate = SVG.createElement('animate', {
         attributeName: 'stdDeviation',
         attributeType: 'number',
-        repeatCount: '0',
+        //repeatCount: '0',
         dur: '1s',
         fill: 'freeze',
         begin: that.options.animateBlurDelay,
